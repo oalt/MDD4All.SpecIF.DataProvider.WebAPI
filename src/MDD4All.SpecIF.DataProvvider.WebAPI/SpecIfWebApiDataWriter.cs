@@ -215,11 +215,6 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             return result;
         }
 
-        protected override IdentifiableElement GetItemWithLatestRevisionInBranch<T>(string id, string branch)
-        {
-            throw new NotImplementedException();
-        }
-
         private async Task<TResult> PostDataAsync<T, TResult>(Uri url, T data)
         {
             TResult result = default(TResult);
