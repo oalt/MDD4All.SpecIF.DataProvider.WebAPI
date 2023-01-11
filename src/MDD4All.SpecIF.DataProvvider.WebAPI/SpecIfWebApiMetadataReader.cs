@@ -2,7 +2,7 @@
  * Copyright (c) MDD4All.de, Dr. Oliver Alt
  */
 using MDD4All.SpecIF.DataModels;
-using MDD4All.SpecIF.DataProvider.Contracts;
+using MDD4All.SpecIF.DataProvider.Base;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MDD4All.SpecIF.DataProvider.WebAPI
 {
-	public class SpecIfWebApiMetadataReader : AbstractSpecIfMetadataReader
+    public class SpecIfWebApiMetadataReader : AbstractSpecIfMetadataReader
 	{
 
 		private string _connectionURL;

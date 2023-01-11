@@ -2,6 +2,7 @@
  * Copyright (c) MDD4All.de, Dr. Oliver Alt
  */
 using MDD4All.SpecIF.DataModels;
+using MDD4All.SpecIF.DataProvider.Base;
 using MDD4All.SpecIF.DataProvider.Contracts;
 using Newtonsoft.Json;
 using System;
