@@ -189,5 +189,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         {
             throw new NotImplementedException();
         }
+
+        public override void NotifyMetadataChanged()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
