@@ -14,40 +14,51 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 {
     public class SpecIfWebApiMetadataReader : AbstractSpecIfMetadataReader
 	{
-
+		
 		private string _connectionURL;
 
-		private HttpClient _httpClient = new HttpClient();
+		private HttpClient _httpClient;
 
 		public SpecIfWebApiMetadataReader(string webApiConnectionURL)
 		{
+			_httpClient = new HttpClient();
 			_connectionURL = webApiConnectionURL;
-			_httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		}
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
 
 		public override List<DataType> GetAllDataTypes()
 		{
-			Task<List<DataType>> task = GetDataListAsync<DataType>("/specif/v1.1/dataTypes");
-			task.Wait();
+			List<DataType> result = new List<DataType>();
 
-			return task.Result;
+			//Task <List<DataType>> task = GetDataListAsync<DataType>("/specif/v1.1/DataTypes");
+			//task.Wait();
+
+			//return task.Result;
+
+			result = GetDataList<DataType>("/specif/v1.1/DataTypes");
+			return result;
+
 		}
 
-
-		public override List<PropertyClass> GetAllPropertyClasses()
+		
+        public override List<PropertyClass> GetAllPropertyClasses()
 		{
-			Task<List<PropertyClass>> task = GetDataListAsync<PropertyClass>("/specif/v1.1/propertyClasses");
-			task.Wait();
+			//Task<List<PropertyClass>> task = GetDataListAsync<PropertyClass>("/specif/v1.1/propertyClasses");
+			//task.Wait();
 
-			return task.Result;
+			//return task.Result;
+			List<PropertyClass> result = GetDataList<PropertyClass>("/specif/v1.1/propertyClasses");
+			return result;
 		}
 
 		public override List<ResourceClass> GetAllResourceClasses()
 		{
-			Task<List<ResourceClass>> task = GetDataListAsync<ResourceClass>("/specif/v1.1/resourceClasses");
-			task.Wait();
+			//Task<List<ResourceClass>> task = GetDataListAsync<ResourceClass>("/specif/v1.1/resourceClasses");
+			//task.Wait();
 
-			return task.Result;
+			//return task.Result;
+			List<ResourceClass> result = GetDataList<ResourceClass>("/specif/v1.1/resourceClasses");
+			return result;
 		}
 
 		
@@ -55,64 +66,94 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
 		public override ResourceClass GetResourceClassByKey(Key key)
 		{
-			Task<ResourceClass> task = GetDataByKeyAsync<ResourceClass>(key, "/specif/v1.1/resourceClasses");
-			task.Wait();
+			//Task task = GetDataByKeyAsync<ResourceClass>(key, "/specif/v1.1/resourceClasses");
+			//task.Wait();
+			//return task.Result;
 
-			return task.Result;
+			var result = GetDataByKey<ResourceClass>(key, "/specif/v1.1/resourceClasses");
+			
+			return result;
 		}
 
 		public override StatementClass GetStatementClassByKey(Key key)
 		{
-			Task<StatementClass> task = GetDataByKeyAsync<StatementClass>(key, "/specif/v1.1/statementClasses");
-			task.Wait();
+            //Task task = GetDataByKeyAsync<StatementClass>(key, "/specif/v1.1/statementClasses");
+            //task.Wait();
+            //return task.Result;
 
-			return task.Result;
+            var result = GetDataByKey<StatementClass>(key, "/specif/v1.1/statementClasses");
+			
+			return result;
 		}
 
 		public override PropertyClass GetPropertyClassByKey(Key key)
 		{
-			Task<PropertyClass> task = GetDataByKeyAsync<PropertyClass>(key, "/specif/v1.1/propertyClasses");
-			task.Wait();
+            //Task task = GetDataByKeyAsync<PropertyClass>(key, "/specif/v1.1/propertyClasses");
+            //task.Wait();
+            //return task.Result;
 
-			return task.Result;
+            var result = GetDataByKey<PropertyClass>(key, "/specif/v1.1/propertyClasses");
+			
+			return result;
 		}
 
 		public override string GetLatestPropertyClassRevision(string propertyClassID)
 		{
-			Task<string> task = GetLatestRevisionAsync<string>(propertyClassID, "SpecIF/PropertyClass/");
-			task.Wait();
+			//Task<string> task = GetLatestRevisionAsync<string>(propertyClassID, "SpecIF/PropertyClass/");
+			//task.Wait();
 
-			return task.Result;
-		}
+			//return task.Result;
+
+			string result = GetLatestRevision<string>(propertyClassID, "SpecIF/PropertyClass/");
+			return result;
+        }
 
 		public override string GetLatestResourceClassRevision(string resourceClassID)
 		{
-			Task<string> task = GetLatestRevisionAsync<string>(resourceClassID, "SpecIF/ResourceClass/");
-			task.Wait();
+            //Task<string> task = GetLatestRevisionAsync<string>(resourceClassID, "SpecIF/ResourceClass/");
+            //task.Wait();
 
-			return task.Result;
-		}
+            //return task.Result;
+
+            string result = GetLatestRevision<string>(resourceClassID, "SpecIF/ResourceClass/");
+            return result;
+        }
 
 		public override string GetLatestStatementClassRevision(string statementClassID)
 		{
-			Task<string> task = GetLatestRevisionAsync<string>(statementClassID, "SpecIF/StatementClass/");
-			task.Wait();
+            //Task<string> task = GetLatestRevisionAsync<string>(statementClassID, "SpecIF/StatementClass/");
+            //task.Wait();
 
-			return task.Result;
-		}
+            //return task.Result;
 
-		private async Task<List<T>> GetDataListAsync<T>(string apiPath)
+            string result = GetLatestRevision<string>(statementClassID, "SpecIF/StatementClass/");
+            return result;
+        }
+
+        private async Task<List<T>> GetDataListAsync<T>(string apiPath)
 		{
 			List<T> result = new List<T>();
 
-			string answer = await _httpClient.GetStringAsync(_connectionURL + apiPath);
+            string answer = await _httpClient.GetStringAsync(_connectionURL + apiPath);
 
 			result = JsonConvert.DeserializeObject<List<T>>(answer);
 
 			return result;
 		}
 
-		private async Task<T> GetDataById<T>(string id, string apiPath)
+        private List<T> GetDataList<T>(string apiPath)
+        {
+            List<T> result = new List<T>();
+
+            Task<string> task = _httpClient.GetStringAsync(_connectionURL + apiPath);
+			task.Wait();
+
+			result = JsonConvert.DeserializeObject<List<T>>(task.Result);
+
+            return result;
+        }
+
+        private async Task<T> GetDataById<T>(string id, string apiPath)
 		{
 			T result = default(T);
 
@@ -141,8 +182,27 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
 			return result;
 		}
+        private T GetDataByKey<T>(Key key, string apiPath)
+        {
+            T result = default(T);
 
-		public async Task<string> GetLatestRevisionAsync<T>(string resourceID, string apiPath)
+            try
+            {
+                Task<string> task = _httpClient.GetStringAsync(_connectionURL + apiPath + "/" + key.ID);
+				task.Wait();
+
+                result = JsonConvert.DeserializeObject<T>(task.Result);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("[ERROR] key=" + key.ID + "--" + key.Revision);
+                Console.WriteLine(exception);
+            }
+
+            return result;
+        }
+
+        public async Task<string> GetLatestRevisionAsync<T>(string resourceID, string apiPath)
 		{
 			string result = "";
 
@@ -152,6 +212,19 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
 			return result;
 		}
+        public string GetLatestRevision<T>(string resourceID, string apiPath)
+        {
+            string result = "";
+
+            Task<string> task = _httpClient.GetStringAsync(_connectionURL + apiPath + "/LatestRevision/" + resourceID);
+			task.Wait();
+
+			result = task.Result;
+
+            //result = new Revision(answer);
+
+            return result;
+        }
 
         public override DataType GetDataTypeByKey(Key key)
         {
@@ -164,10 +237,13 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override List<StatementClass> GetAllStatementClasses()
         {
-            Task<List<StatementClass>> task = GetDataListAsync<StatementClass>("/specif/v1.1/statementClasses");
-            task.Wait();
+			//Task<List<StatementClass>> task = GetDataListAsync<StatementClass>("/specif/v1.1/statementClasses");
+			//task.Wait();
 
-            return task.Result;
+			//return task.Result;
+
+			List<StatementClass> result = GetDataList<StatementClass>("/specif/v1.1/statementClasses");
+			return result;
         }
 
         public override List<DataType> GetAllDataTypeRevisions(string dataTypeID)

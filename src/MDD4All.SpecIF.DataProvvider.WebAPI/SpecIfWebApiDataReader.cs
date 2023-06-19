@@ -4,10 +4,13 @@
 using MDD4All.SpecIF.DataModels;
 using MDD4All.SpecIF.DataProvider.Base;
 using MDD4All.SpecIF.DataProvider.Contracts;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Conventions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -36,10 +39,18 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override List<Node> GetAllHierarchies()
         {
-            Task<List<Node>> task = GetAllHierarchiesAsync();
+            List<Node> result = new List<Node>();
+
+            UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies");
+
+            Uri finalUrl = uriBuilder.Uri;
+
+            Task<string> task = _httpClient.GetStringAsync(finalUrl);
             task.Wait();
 
-            return task.Result;
+            result = JsonConvert.DeserializeObject<List<Node>>(task.Result);
+
+            return result;
         }
 
         public async Task<List<Node>> GetAllHierarchiesAsync()
@@ -75,30 +86,38 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Uri finalUrl = uriBuilder.Uri;
 
-            Task<Node> task = GetDataFromServiceAsync<Node>(finalUrl);
-            task.Wait();
+            //Task<Node> task = GetDataFromServiceAsync<Node>(finalUrl);
+            //task.Wait();
 
-            result = task.Result;
+            //return task.Result;
+
+            result = GetDataFromService<Node>(finalUrl);
 
             return result;
         }
 
-		public override string GetLatestHierarchyRevision(string hierarchyID)
+        public override string GetLatestHierarchyRevision(string hierarchyID)
 		{
-			Task<string> task = GetLatestRevisionAsync<Node>(hierarchyID, "SpecIF/Hierarchy/");
-			task.Wait();
+            //Task<string> task = GetLatestRevisionAsync<Node>(hierarchyID, "specif/v1.1/Hierarchy/");
+            //task.Wait();
 
-			return task.Result;
+            //return task.Result;
+
+            string result = GetLatestRevision<Node>(hierarchyID, "/specif/v1.1/hierarchies/");
+            return result;
 		}
 
 
 		public override string GetLatestStatementRevision(string statementID)
 		{
-			Task<string> task = GetLatestRevisionAsync<Statement>(statementID, "SpecIF/Statement/");
-			task.Wait();
+            //Task<string> task = GetLatestRevisionAsync<Statement>(statementID, "specif/v1.1/Statement/");
+            //task.Wait();
 
-			return task.Result;
-		}
+            //return task.Result;
+
+            string result = GetLatestRevision<Node>(statementID, "/specif/v1.1/statements/");
+            return result;
+        }
 
 		public override Resource GetResourceByKey(Key key)
         {
@@ -115,10 +134,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Debug.WriteLine(finalUrl);
 
-            Task<Resource> task = GetDataFromServiceAsync<Resource>(finalUrl);
-            task.Wait();
+            //Task<Resource> task = GetDataFromServiceAsync<Resource>(finalUrl);
+            //task.Wait();
+            //result = task.Result;
 
-			result = task.Result;
+            result = GetDataFromService<Resource>(finalUrl);
 
 			if (result != null)
 			{
@@ -145,6 +165,8 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             result = await GetDataFromServiceAsync<Resource>(finalUrl);
 
+            //result = GetDataFromService<Resource>(finalUrl);
+
             return result;
         }
 
@@ -161,10 +183,9 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Uri finalUrl = uriBuilder.Uri;
 
-            Task<Statement> task = GetDataFromServiceAsync<Statement>(finalUrl);
-			task.Wait();
+            //result = await GetDataFromServiceAsync<Statement>(finalUrl);
 
-            result = task.Result;
+            result = GetDataFromService<Statement>(finalUrl);
 
             return result;
 		}
@@ -188,20 +209,80 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 			return result;
 		}
 
-		public async Task<string> GetLatestRevisionAsync<T>(string resourceID, string apiPath)
+        private T GetDataFromService<T>(Uri uri)
+        {
+            T result = default(T);
+
+            try
+            {
+                Task<string> task = _httpClient.GetStringAsync(uri);
+                task.Wait();
+
+                result = JsonConvert.DeserializeObject<T>(task.Result, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            }
+            catch (Exception exception)
+            {
+
+                //Console.WriteLine(exception);
+            }
+
+            return result;
+        }
+
+        public T GetItemByKey<T>(Key itemKey, string apiPath) {
+            T result = default(T);
+
+            UriBuilder uriBuilder = new UriBuilder(_connectionURL + apiPath + itemKey.ID);
+
+            System.Collections.Specialized.NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
+            parameters["revision"] = itemKey.Revision;
+
+            uriBuilder.Query = parameters.ToString();
+
+            Uri finalUrl = uriBuilder.Uri;
+
+            //Task<Node> task = GetDataFromServiceAsync<Node>(finalUrl);
+            //task.Wait();
+
+            //return task.Result;
+
+            result = GetDataFromService<T>(finalUrl);
+
+            return result;
+        }
+
+        //public override T GetItemWithLatestRevision<T>(string itemID, string apiPath)
+        //{
+        //    T result = default(T);
+
+        //    string revisionID = GetLatestRevision<T>(itemID, apiPath);
+        //    Key itemKey = new Key(itemID, revisionID);
+        //    result = GetItemByKey<T> (itemKey, revisionID);
+
+        //    return result;
+        //}
+
+        public async Task<string> GetLatestRevisionAsync<T>(string resourceID, string apiPath)
 		{
 			string result = null;
 
-			string answer = await _httpClient.GetStringAsync(_connectionURL + apiPath + "/LatestRevision/" + resourceID);
-
-
-
-            
+			string answer = await _httpClient.GetStringAsync(_connectionURL + apiPath + resourceID + "/latestRevision");
 
 			return result;
 		}
+        public string GetLatestRevision<T>(string resourceID, string apiPath)
+        {
+            string result = string.Empty;
 
-		public override List<Statement> GetAllStatementsForResource(Key resourceKey)
+            string fullPath = _connectionURL + apiPath + resourceID + "/latestRevision";
+            Task<string> task = _httpClient.GetStringAsync(fullPath);
+            task.Wait();
+            result = task.Result.Trim('"');
+
+            return result;
+        }
+
+        public override List<Statement> GetAllStatementsForResource(Key resourceKey)
 		{
             List<Statement> result = new List<Statement>();
 
@@ -217,10 +298,12 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Uri finalUrl = uriBuilder.Uri;
 
-            Task<List<Statement>> task = GetDataFromServiceAsync<List<Statement>>(finalUrl);
-            task.Wait();
+            //Task<List<Statement>> task = GetDataFromServiceAsync<List<Statement>>(finalUrl);
+            //task.Wait();
 
-            result = task.Result;
+            //return task.Result;
+
+            result = GetDataFromService<List<Statement>>(finalUrl);
 
             return result;
         }
@@ -242,6 +325,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             throw new NotImplementedException();
         }
 
+        public override List<Node> GetAllHierarchyRevisions(string nodeID)
+        {
+            throw new NotImplementedException();
+        }
+
         public override List<Statement> GetAllStatements()
         {
             throw new NotImplementedException();
@@ -259,12 +347,42 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override Node GetNodeByKey(Key key)
         {
-            throw new NotImplementedException();
+            UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies/" + key.ID);
+            if (key.Revision != null)
+            {
+                System.Collections.Specialized.NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
+                parameters["revision"] = key.Revision;
+                uriBuilder.Query = parameters.ToString();
+            }
+
+            Task<HttpResponseMessage> task = _httpClient.GetAsync(uriBuilder.Uri);
+            task.Wait();
+
+            string answer = task.Result.Content.ReadAsStringAsync().Result;
+
+            Node result = JsonConvert.DeserializeObject<Node>(answer, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+            return result;
         }
 
-        public override Node GetParentNode(Key childNode)
+        public override Node GetParentNode(Key childNodeKey)
         {
-            throw new NotImplementedException();
+            //Node result = null;
+
+            //foreach (KeyValuePair<string, DataModels.SpecIF> keyValuePair in SpecIfData)
+            //{
+            //    DataModels.SpecIF specif = keyValuePair.Value;
+
+            //    Node node = specif.GetParentNode(childNode.ID);
+            //    if (node != null)
+            //    {
+            //        result = node;
+            //        break;
+            //    }
+            //}
+
+            //return result;
+            return new Node();
         }
 
 
@@ -273,13 +391,15 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             List<ProjectDescriptor> result;
 
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/projects");
-            
-            Task<List<ProjectDescriptor>> task = GetDataFromServiceAsync<List<ProjectDescriptor>>(uriBuilder.Uri);
-            task.Wait();
 
-            result = task.Result;
+            //Task<List<ProjectDescriptor>> task = GetDataFromServiceAsync<List<ProjectDescriptor>>(uriBuilder.Uri);
+            //task.Wait();
 
-            return task.Result;
+            //return task.Result;
+
+            result = GetDataFromService<List<ProjectDescriptor>>(uriBuilder.Uri);
+
+            return result;
         }
 
         public override List<Node> GetAllHierarchyRootNodes(string projectID = null)
@@ -302,13 +422,14 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Debug.WriteLine(finalUrl);
 
-            Task<List<Node>> task = GetDataFromServiceAsync<List<Node>>(finalUrl);
-            task.Wait();
+            //Task<List<Node>> task = GetDataFromServiceAsync<List<Node>>(finalUrl);
+            //task.Wait();
 
-            result = task.Result;
+            //return task.Result;
 
-            
-            return task.Result;
+            result = GetDataFromService<List<Node>>(finalUrl);
+
+            return result;
         }
 
         public override DataModels.SpecIF GetProject(ISpecIfMetadataReader metadataReader, string projectID, List<Key> hierarchyFilter = null, bool includeMetadata = true)
@@ -327,13 +448,14 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             Debug.WriteLine(finalUrl);
 
-            Task<DataModels.SpecIF> task = GetDataFromServiceAsync<DataModels.SpecIF>(finalUrl);
-            task.Wait();
+            //Task<DataModels.SpecIF> task = GetDataFromServiceAsync<DataModels.SpecIF>(finalUrl);
+            //task.Wait();
 
-            result = task.Result;
+            //return task.Result;
 
+            result = GetDataFromService<DataModels.SpecIF>(finalUrl);
 
-            return task.Result;
+            return result;
         }
     }
 }
