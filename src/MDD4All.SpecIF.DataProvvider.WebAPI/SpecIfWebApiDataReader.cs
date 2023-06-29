@@ -40,9 +40,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         public override List<Node> GetAllHierarchies()
         {
             List<Node> result = new List<Node>();
+            bool rootNodesOnly = false;
 
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies");
-
+            uriBuilder.Query = "rootNodesOnly=" + rootNodesOnly.ToString();
             Uri finalUrl = uriBuilder.Uri;
 
             Task<string> task = _httpClient.GetStringAsync(finalUrl);
@@ -103,8 +104,12 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             //return task.Result;
 
-            string result = GetLatestRevision<Node>(hierarchyID, "/specif/v1.1/hierarchies/");
-            return result;
+
+
+
+
+            //string result = GetLatestRevision<Node>(hierarchyID, "/specif/v1.1/hierarchies/");
+            return null;
 		}
 
 
@@ -325,11 +330,6 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             throw new NotImplementedException();
         }
 
-        public override List<Node> GetAllHierarchyRevisions(string nodeID)
-        {
-            throw new NotImplementedException();
-        }
-
         public override List<Statement> GetAllStatements()
         {
             throw new NotImplementedException();
@@ -337,7 +337,32 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override List<Node> GetChildNodes(Key parentNodeKey)
         {
-            throw new NotImplementedException();
+            List<Node> result = new List<Node>();
+
+            Node parentNode = GetNodeByKey(parentNodeKey);
+
+            if (parentNode != null)
+            {
+                foreach (Key childKey in parentNode.NodeReferences)
+                {
+                    Node childNode = GetNodeByKey(childKey);
+                    if (childNode != null)
+                    {
+                        result.Add(childNode);
+                    }
+                    else
+                    {
+                        result = null;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                result = null;
+            }
+
+            return result;
         }
 
         public override string GetLatestResourceRevisionForBranch(string resourceID, string branchName)
@@ -365,9 +390,30 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             return result;
         }
 
+
+
         public override Node GetParentNode(Key childNodeKey)
         {
-            //Node result = null;
+            Node result = null;
+            List<Node> allHierarchies = GetAllHierarchies();
+            List<Node> childNodes = GetAllChildNodesRecursively(allHierarchies);
+
+            List<Node> allNodes = allHierarchies;
+            allNodes.AddRange(childNodes);
+            
+            foreach(Node node in allNodes)
+            {
+                foreach(Key key in node.NodeReferences)
+                {
+                    if (key.ID == childNodeKey.ID)
+                    {
+                        result = node;
+                        break;
+                    }
+                }
+            }
+
+            return result;
 
             //foreach (KeyValuePair<string, DataModels.SpecIF> keyValuePair in SpecIfData)
             //{
@@ -380,11 +426,24 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             //        break;
             //    }
             //}
-
-            //return result;
-            return new Node();
         }
 
+        private List<Node> GetAllChildNodesRecursively(List<Node> hierarchiesToSearch)
+        {
+            List<Node> result = new List<Node>();
+            
+            foreach(Node node in hierarchiesToSearch) 
+            {
+                if(node.NodeReferences.Count > 0)
+                {
+                    List<Node> childNodes = GetChildNodes(new Key(node.ID));
+                    result.AddRange(childNodes);
+                    List<Node> lowerChildNodes = GetAllChildNodesRecursively(childNodes);
+                    result.AddRange(lowerChildNodes);
+                }
+            }
+            return result;
+        }
 
         public override List<ProjectDescriptor> GetProjectDescriptions()
         {

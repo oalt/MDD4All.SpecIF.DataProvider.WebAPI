@@ -22,6 +22,8 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 {
     public class SpecIfWebApiDataWriter : AbstractSpecIfDataWriter
     {
+        private const string DEFAULT_PROJECT = "PRJ-DEFAULT";
+
         private string _connectionURL;
 
         private HttpClient _httpClient = new HttpClient();
@@ -68,17 +70,19 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         {
             string apiPath = "/specif/v1.1/hierarchies/";
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + apiPath);
+            string queryParent = "parent=" + parentNodeID;
+            string queryProject = "projectId" + DEFAULT_PROJECT;
+            uriBuilder.Query = queryParent + "&" + queryProject;
 
-            Key key = new Key();
-            key.ID = parentNodeID;
-            key.Revision = _dataReader.GetLatestHierarchyRevision(parentNodeID);
+            Key key = new Key(parentNodeID);
+            //key.Revision = _dataReader.GetLatestHierarchyRevision(parentNodeID);
 
             Node parentNode = _dataReader.GetNodeByKey(key);
 
             if (parentNodeID != null)
             {
 
-                if(string.IsNullOrEmpty(newNode.Revision))
+                if (string.IsNullOrEmpty(newNode.Revision))
                 {
                     newNode.Revision = SpecIfGuidGenerator.CreateNewRevsionGUID();
                 }
@@ -90,22 +94,22 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
                 //PostDataAsync<Node, Node>(uriBuilder.Uri, newNode).Wait();
                 PostData<Node, Node>(uriBuilder.Uri, newNode);
 
-                //if(parentNode.Nodes == null)
-                //{
-                //    parentNode.Nodes = new List<Node>();
-                //    parentNode.Nodes.Add(newNode);
-                //}
-                //else
-                //{
-                //    parentNode.Nodes.Insert(0, newNode);
-                //}
-                parentNode.NodeReferences.Insert(0, new Key(newNode.ID, newNode.Revision));
+                if (parentNode.Nodes == null)
+                {
+                    parentNode.Nodes = new List<Node>();
+                    parentNode.Nodes.Add(newNode);
+                }
+                else
+                {
+                    parentNode.Nodes.Insert(0, newNode);
+                }
 
-                UpdateHierarchy(parentNode, parentNodeID);
+                //parentNode.NodeReferences.Insert(0, new Key(newNode.ID, newNode.Revision));
+
+                //string higherParentNodeID = _dataReader.GetParentNode(key).ID;
+                UpdateHierarchy(parentNode);
             }
         }
-
-        private const string DEFAULT_PROJECT = "PRJ-DEFAULT";
 
         public override void AddProject(ISpecIfMetadataWriter metadataWriter, DataModels.SpecIF project, string integrationID = null)
         {
@@ -137,7 +141,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override void InitializeIdentificators()
         {
-            //throw new NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public override void MoveNode(string nodeID, string newParentID, string newSiblingId)
@@ -179,6 +183,14 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             Node result = null;
 
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies/");
+
+            System.Collections.Specialized.NameValueCollection parameters = HttpUtility.ParseQueryString(string.Empty);
+
+            if (parentID != null)
+            {
+                parameters["parent"] = parentID;
+            }
+            uriBuilder.Query = parameters.ToString();
 
             Uri finalUrl = uriBuilder.Uri;
 
@@ -293,7 +305,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             {
                 string json = JsonConvert.SerializeObject(data, new JsonSerializerSettings
                 {
-                    NullValueHandling = NullValueHandling.Ignore
+                    //NullValueHandling = NullValueHandling.Include
                 });
                 
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, "application/json");
@@ -366,12 +378,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             return result;
         }
 
-        private void DeleteData<T>(Uri url, T itemToDelete)
+        private void DeleteData<T>(Uri url)
         {
-            Task<HttpResponseMessage> taskGet = _httpClient.GetAsync(url);
-            taskGet.Wait();
-
             Task taskDelete = _httpClient.DeleteAsync(url);
+            taskDelete.Wait();
         }
 
         private async Task<HttpResponseMessage> PutCommandAsync(Uri url)
@@ -417,7 +427,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
         public override void AddNodeAsPredecessor(string predecessorID, Node newNode)
         {
-            UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies");
+            string apiPath = "/specif/v1.1/hierarchies/";
+            UriBuilder uriBuilder = new UriBuilder(_connectionURL + apiPath);
+            string queryPredecessor = "predecessor=" + predecessorID;
+            string queryProject = "projectId=" + DEFAULT_PROJECT;
+            uriBuilder.Query = queryPredecessor + "&" + queryProject;
 
             Node parentNode = _dataReader.GetParentNode(new Key { ID = predecessorID, Revision = null });
 
@@ -450,11 +464,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
                 //_nodeMongoDbAccessor.Add(newNode);
                 PostData<Node, Node>(uriBuilder.Uri, newNode);
 
-                parentNode.NodeReferences.Add(new Key(newNode.ID, newNode.Revision));
+                //parentNode.Nodes.Add(newNode);
 
                 //_hierarchyMongoDbAccessor.Update(parentNode, parentNode.Id);
-                UpdateHierarchy(parentNode);
-
+                //UpdateHierarchy(parentNode);
             }
         }
 
@@ -469,10 +482,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
                 int index = -1;
 
-                for (int counter = 0; counter < parent.NodeReferences.Count; counter++)
+                for (int counter = 0; counter < parent.Nodes.Count; counter++)
                 {
 
-                    if (parent.NodeReferences[counter].ID == nodeID)
+                    if (parent.Nodes[counter].ID == nodeID)
                     {
                         index = counter;
                         break;
@@ -481,10 +494,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
                 if (index > -1)
                 {
-                    parent.NodeReferences.RemoveAt(index);
+                    parent.Nodes.RemoveAt(index);
                 }
 
-                UpdateHierarchy(parent, parent.Id);
+                UpdateHierarchy(parent);
+
             }
             else if (nodeToDelete != null && nodeToDelete.IsHierarchyRoot)
             {
@@ -492,13 +506,26 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             }
         }
 
-        public void DeleteHierarchy(string id)
+        public void DeleteHierarchy(string id, Node nodeToDelete = null)
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies/");
 
-            Node nodeToDelete = _dataReader.GetNodeByKey(new Key(id));
+            if (nodeToDelete == null)
+            {
+                nodeToDelete = _dataReader.GetNodeByKey(new Key(id));
+            }
 
-            DeleteData<Node>(uriBuilder.Uri, nodeToDelete);
+            if (nodeToDelete.Revision != null)
+            {
+                uriBuilder.Query = nodeToDelete.Revision;
+            }
+
+            DeleteData<Node>(uriBuilder.Uri);
+
+            foreach (Node node in nodeToDelete.Nodes)
+            {
+                DeleteHierarchy(node.ID, node);
+            }
         }
     }
 }

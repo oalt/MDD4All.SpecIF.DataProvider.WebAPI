@@ -17,15 +17,20 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         private string _connectionURL;
         private HttpClient _httpClient;
 
-        public SpecIfWebApiMetadataWriter(string connectionURL)
+        public SpecIfWebApiMetadataWriter(string connectionURL, string apiKey)
         {
             _httpClient = new HttpClient();
             _connectionURL = connectionURL;
+
+            if (apiKey != null) 
+            {
+                _httpClient.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
+            }
         }
 
         public override void AddDataType(DataType dataType)
         {
-            UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/datatypes/");
+            UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/dataTypes/");
             PostData<DataType, DataType>(uriBuilder.Uri, dataType);
         }
 
