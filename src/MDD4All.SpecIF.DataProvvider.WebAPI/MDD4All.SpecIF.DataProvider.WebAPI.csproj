@@ -1,23 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>MDD4All_Github.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>MDD4All_Github.snk</AssemblyOriginatorKeyFile>
+        <Authors>Dr. Oliver Alt</Authors>
+        <Company>MDD4All.de</Company>
+        <Description>SpecIF data provider for the SpecIF Web API</Description>
+        <Copyright>(c) MDD4All.de</Copyright>
+        <PackageReadmeFile>Nuget.md</PackageReadmeFile>
+        <PackageTags>SpecIF;DataProvider;WebAPI</PackageTags>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="MDD4All.SpecIF.DataModels.Manipulation" Version="3.0.1.34" />
+        <PackageReference Include="MDD4All.SpecIF.DataProvider.Base" Version="2.0.0.2" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MDD4All.SpecIF.DataModels.RightsManagement\src\MDD4All.SpecIF.DataModels.RightsManagement\MDD4All.SpecIF.DataModels.RightsManagement.csproj" />
-    <ProjectReference Include="..\MDD4All.SpecIF.DataProvider.Contracts\src\MDD4All.SpecIF.DataProvider.Contracts\MDD4All.SpecIF.DataProvider.Contracts.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="Nuget.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Properties\" />
+    </ItemGroup>
 
 </Project>
