@@ -2,6 +2,7 @@
  * Copyright (c) MDD4All.de, Dr. Oliver Alt
  */
 using MDD4All.SpecIF.DataModels;
+using MDD4All.SpecIF.DataModels.DiagramMetadata;
 using MDD4All.SpecIF.DataProvider.Base;
 using Newtonsoft.Json;
 using System;
@@ -267,6 +268,21 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         }
 
         public override void NotifyMetadataChanged()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override List<DiagramObjectClass> GetAllDiagramObjectClasses()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override DiagramObjectClass GetDiagramObjectClassByKey(Key key)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override List<DiagramObjectClass> GetAllDiagramObjectClassesRevisions(string classID)
         {
             throw new NotImplementedException();
         }

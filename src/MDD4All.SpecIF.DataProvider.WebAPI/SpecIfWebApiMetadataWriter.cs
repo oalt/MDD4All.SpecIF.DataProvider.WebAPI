@@ -1,4 +1,5 @@
 ﻿using MDD4All.SpecIF.DataModels;
+using MDD4All.SpecIF.DataModels.DiagramMetadata;
 using MDD4All.SpecIF.DataProvider.Base;
 using MDD4All.SpecIF.DataProvider.Contracts;
 using Newtonsoft.Json;
@@ -34,6 +35,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             PostData<DataType, DataType>(uriBuilder.Uri, dataType);
         }
 
+        public override void AddDiagramObjectClass(DiagramObjectClass diagramObjectClass)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void AddPropertyClass(PropertyClass propertyClass)
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/propertyClasses/");
@@ -55,6 +61,11 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/datatypes/");
             PutData<DataType, DataType>(uriBuilder.Uri, dataType);
+        }
+
+        public override void UpdateDiagramObjectClass(DiagramObjectClass diagramObjectClass)
+        {
+            throw new NotImplementedException();
         }
 
         public override void UpdatePropertyClass(PropertyClass propertyClass)
