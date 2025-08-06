@@ -471,7 +471,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             }
         }
 
-        public override void DeleteNode(string nodeID)
+        public override void DeleteNode(string nodeID, string projectID)
         {
             Node nodeToDelete = _dataReader.GetNodeByKey(new Key { ID = nodeID, Revision = null });
 

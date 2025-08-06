@@ -516,5 +516,10 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
             return result;
         }
+
+        public override string GetProjectIDFromNodeID(string nodeID)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
