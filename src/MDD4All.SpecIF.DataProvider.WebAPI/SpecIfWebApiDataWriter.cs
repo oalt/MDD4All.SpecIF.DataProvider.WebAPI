@@ -66,7 +66,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             PostData<Node, Node>(uriBuilder.Uri, hierarchy);
         }
 
-        public override void AddNodeAsFirstChild(string parentNodeID, Node newNode)
+        public override void AddNodeAsFirstChild(string parentNodeID, Node newNode, string projectID = null)
         {
             string apiPath = "/specif/v1.1/hierarchies/";
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + apiPath);
@@ -119,14 +119,14 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             IntegrateProjectData(metadataWriter, project, integrationID ?? ProjectId);
         }
 
-        public override void AddResource(Resource resource)
+        public override void AddResource(Resource resource, string projectID = null)
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/resources");
             //PostDataAsync<Resource, Resource>(uriBuilder.Uri, resource).Wait();
             PostData<Resource, Resource>(uriBuilder.Uri, resource);
         }
 
-        public override void AddStatement(Statement statement)
+        public override void AddStatement(Statement statement, string projectID = null)
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/statements/");
 
@@ -144,7 +144,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             throw new NotImplementedException();
         }
 
-        public override void MoveNode(string nodeID, string newParentID, string newSiblingId)
+        public override void MoveNode(string nodeID, string newParentID, string newSiblingId, string projectID = null)
         {
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + "/specif/v1.1/hierarchies/move");
 
@@ -178,7 +178,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
 
 
 
-        public override Node UpdateHierarchy(Node hierarchyToUpdate, string parentID = null, string predecessorID = null)
+        public override Node UpdateHierarchy(Node hierarchyToUpdate, string parentID = null, string predecessorID = null, string projectID = null)
         {
             Node result = null;
 
@@ -252,7 +252,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             throw new NotImplementedException();
         }
 
-        public override Resource UpdateResource(Resource resource)
+        public override Resource UpdateResource(Resource resource, string projectID = null)
         {
             Resource result = null;
 
@@ -425,7 +425,7 @@ namespace MDD4All.SpecIF.DataProvider.WebAPI
             return result;
         }
 
-        public override void AddNodeAsPredecessor(string predecessorID, Node newNode)
+        public override void AddNodeAsPredecessor(string predecessorID, Node newNode, string projectID = null)
         {
             string apiPath = "/specif/v1.1/hierarchies/";
             UriBuilder uriBuilder = new UriBuilder(_connectionURL + apiPath);
